@@ -2,7 +2,7 @@
 Sample configurations for distributed transactions in EI
 
 
-1. Configure ActiveMQ and Mysql with EI using the lib jars available in libs folder.
+1. Configure ActiveMQ(5.8.0) and Mysql with EI using the lib jars available in libs folder.
 2. Setup Mysql 5.7.21 and execute resources/database.sql to create the database and table.
 3. Replace transactions.properties file found in EI/wso2/lib with resources/transactions.properties.
 4. Replace EI/conf/datasources/master-datasources.xml with resources/master-datasources.xml.
