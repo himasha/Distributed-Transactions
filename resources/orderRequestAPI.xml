@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api xmlns="http://ws.apache.org/ns/synapse" name="orderRequestAPI" context="/order">
+   <resource methods="POST" uri-template="/store">
+      <inSequence>
+         <property name="OUT_ONLY" value="true" />
+         <log level="custom">
+            <property name="text1" value="** Adding quote info to  database and queue**"/>
+         </log>
+         <transaction action="new" />
+         <dbreport useTransaction="true">
+            <connection>
+               <pool>
+                  <dsName>jdbc/OrderDB</dsName>
+               </pool>
+            </connection>
+            <statement>
+               <sql>INSERT into order values (?,?,?)</sql>
+               <parameter xmlns:m0="http://services.samples/xsd" xmlns:m1="http://services.samples" xmlns:ns="http://org.apache.synapse/xsd" expression="//m0:order/m0:id/child::text()" type="VARCHAR" />
+               <parameter xmlns:m0="http://services.samples/xsd" xmlns:m1="http://services.samples" xmlns:ns="http://org.apache.synapse/xsd" expression="//m0:order/m0:productCode/child::text()" type="VARCHAR" /> 
+              <parameter xmlns:m0="http://services.samples/xsd" xmlns:m1="http://services.samples" xmlns:ns="http://org.apache.synapse/xsd" expression="//m0:order/m0:price/child::text()" type="DOUBLE" /> 
+             <parameter xmlns:m0="http://services.samples/xsd" xmlns:m1="http://services.samples" xmlns:ns="http://org.apache.synapse/xsd" expression="//m0:order/m0:quantity/child::text()" type="INTEGER" /> </statement>
+         </dbreport>
+         <callout serviceURL="jms:/StockPublisher?transport.jms.ConnectionFactoryJNDIName=XAConnectionFactory&amp;java.naming.factory.initial=org.apache.activemq.jndi.ActiveMQInitialContextFactory&amp;java.naming.provider.url=tcp://localhost:61616&amp;transport.jms.DestinationType=queue">
+            <source type="envelope" />
+            <target xmlns:s11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:s12="http://www.w3.org/2003/05/soap-envelope" xpath="s11:Body/child::*[fn:position()=1] | s12:Body/child::*[fn:position()=1]" />
+         </callout>
+         <callout serviceURL="jms:/ShippingPublisher?transport.jms.ConnectionFactoryJNDIName=XAConnectionFactory&amp;java.naming.factory.initial=org.apache.activemq.jndi.ActiveMQInitialContextFactory&amp;java.naming.provider.url=tcp://localhost:61616&amp;transport.jms.DestinationType=queue;transport.jms.TransactionCommand=end">
+            <source type="envelope" />
+            <target xmlns:s11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:s12="http://www.w3.org/2003/05/soap-envelope" xpath="s11:Body/child::*[fn:position()=1] | s12:Body/child::*[fn:position()=1]" />
+         </callout>
+         <transaction action="commit" />
+         <respond />
+      </inSequence>
+<faultSequence>
+   <log level="custom">
+      <property name="text" value="** Rollback Transaction**" />
+   </log>
+   <callout serviceURL="jms:/OrderFault?transport.jms.ConnectionFactoryJNDIName=XAConnectionFactory&amp;java.naming.factory.initial=org.apache.activemq.jndi.ActiveMQInitialContextFactory&amp;java.naming.provider.url=tcp://activemq-service:61616&amp;transport.jms.DestinationType=queue;transport.jms.TransactionCommand=rollback">
+      <source type="envelope" />
+      <target xmlns:s11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:s12="http://www.w3.org/2003/05/soap-envelope" xpath="s11:Body/child::*[fn:position()=1] | s12:Body/child::*[fn:position()=1]" />
+   </callout>
+   <transaction action="rollback" />
+   <property name="messageType" value="application/json" scope="axis2" />
+   <respond />
+</faultSequence> 

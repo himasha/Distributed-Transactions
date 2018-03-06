@@ -1,0 +1,13 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+   <soapenv:Header/>
+   <soapenv:Body>
+<m0:order xmlns:m0="http://services.samples/xsd">
+    <m0:id>1001</m0:id>
+    <m0:productCode>NFS</m0:productCode>
+    <m0:price>200</m0:price>
+   <m0:quantity>1</m0:quantity> 
+</m0:order>
+</soapenv:Body>
+</soapenv:Envelope>
+
+
